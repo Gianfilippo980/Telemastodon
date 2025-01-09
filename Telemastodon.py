@@ -38,7 +38,7 @@ mastodon.log_in([AUTENTICATION], to_file= 'Telepython_utente.secret', scopes=['w
 
 def posta_immagine(rss):
     media = mastodon.media_post('ultim_ora.png', description= rss.summary)
-    titolo = "#Ultimora " + rss.title
+    titolo = rss.title + "\n\n" + "#Ultimora"
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Loop
