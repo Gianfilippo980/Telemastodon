@@ -4,7 +4,7 @@ import requests
 from PIL import Image
 from io import BytesIO
 import feedparser
-from time import sleep
+import time
 from mastodon import Mastodon
 
 #Gestione immagine
@@ -42,17 +42,19 @@ def posta_immagine(rss):
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Loop
-ora_precedente = None
+ora_precedente = time.gmtime()
 while True:
     feed_rss = apri_rss(indirizzo_feed)
     if feed_rss is None:
-        sleep(10)
+        time.sleep(10)
         continue
-    sleep(20)
+    time.sleep(20)
     #Ritardo qui per essere sicuro di prendere l'immagine dopo l'aggiornamento
 
-    ora_corrente = ora_ultima(feed_rss)    
-    if ora_corrente != ora_precedente:
+    ora_corrente = ora_ultima(feed_rss)
+    if ora_corrente is None:
+        continue  
+    if ora_corrente > ora_precedente:
         print("Ora cambiata.")
         immagine_corrente = scarica_immagine(indirizzo_immagine)
         if immagine_corrente is None:
