@@ -30,15 +30,17 @@ def apri_rss(url_rss):
         return None
 
 def ora_ultima(feed):
-    return feed.entries[0].published_parsed
+    try:
+        return feed.entries[0].published_parsed
+    except:
+        return None
 
 #Gestione Mastodon
 mastodon = Mastodon(client_id = 'Telepython_client.secret')
-mastodon.log_in([AUTENTICATION], to_file= 'Telepython_utente.secret', scopes=['write'])
+mastodon.log_in([LOGIN], to_file= 'Telepython_utente.secret', scopes=['write'])
 
-def posta_immagine(rss):
-    media = mastodon.media_post('ultim_ora.png', description= rss.summary)
-    titolo = rss.title + "\n\n" + "#Ultimora"
+def posta_immagine(titolo, descrizione):
+    media = mastodon.media_post('ultim_ora.png', description= descrizione)
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Loop
@@ -55,11 +57,15 @@ while True:
     if ora_corrente is None:
         continue  
     if ora_corrente > ora_precedente:
-        print("Ora cambiata.")
         immagine_corrente = scarica_immagine(indirizzo_immagine)
         if immagine_corrente is None:
             #In caso di errore attende un altro ciclo
             continue
+        try:
+            titolo = feed_rss.entries[0].title + "\n\n" + "#Ultimora"
+            descrizione = feed_rss.entries[0].summary
+        except:
+            continue
         ora_precedente = ora_corrente
         immagine_corrente.save("ultim_ora.png")
-        posta_immagine(feed_rss.entries[0])
+        posta_immagine(titolo, descrizione)
