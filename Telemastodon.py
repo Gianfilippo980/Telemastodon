@@ -1,25 +1,29 @@
 """Bot per il caricamento su Mastodon dell'immagine dell'ultimora del Televideo"""
 
 import requests
-from PIL import Image
-from io import BytesIO
 import feedparser
 import time
+import Credenziali
+from PIL import Image
+from io import BytesIO
 from mastodon import Mastodon
 
-#Gestione immagine
+#Indirizzi
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
 indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 
-def scarica_immagine(url):
-    try:
-        risposta = requests.get(url)
-        risposta.raise_for_status()
-        immagine = Image.open(BytesIO(risposta.content))
-        return immagine
-    except:
-        print("Errore di rete")
-        return None
+class Immagine:
+    def __init__(self, indirizzo : str):
+        self.indirizzo = indirizzo
+    def scarica_immagine(url):
+        try:
+            risposta = requests.get(url)
+            risposta.raise_for_status()
+            immagine = Image.open(BytesIO(risposta.content))
+            return immagine
+        except:
+            print("Errore di rete")
+            return None
 
 def apri_rss(url_rss):
     try:
