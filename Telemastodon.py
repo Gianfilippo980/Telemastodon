@@ -3,7 +3,8 @@
 import requests
 import feedparser
 import time
-import Credenziali
+import threading
+from Credenziali import mastodon
 from PIL import Image
 from io import BytesIO
 from mastodon import Mastodon
@@ -11,6 +12,35 @@ from mastodon import Mastodon
 #Indirizzi
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
 indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
+
+#Periodi
+#Gli sleep sono il tempo che passa fra due dowload dal web
+sleep_rss = 20
+sleep_immagine = 20
+#Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dop essere cambiati
+finestra_rss = 60
+finestra_immagine = 60
+
+class RSS:
+    def __init__(self, intervallo : int, indirizzo:str):
+        self.indirizzo = indirizzo
+        self.intervallo = intervallo
+        self._stop = threading.Event()
+        self.thread = threading.Thread(target= self._ciclo)
+        self.thread.start()
+        self.feed = None
+        self.scorsa_ora = time.gmtime()
+    def _ciclo(self):
+        while not self._stop.is_set():
+            self.aggiorna()
+            time.sleep(self.intervallo) 
+    def aggiorna(self):
+        try:
+            self.feed = feedparser.parse(self.indirizzo)
+        except:
+            return
+        
+
 
 class Immagine:
     def __init__(self, indirizzo : str):
