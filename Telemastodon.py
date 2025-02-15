@@ -1,4 +1,5 @@
 """Bot per il caricamento su Mastodon dell'immagine dell'ultimora del Televideo"""
+#Questa versine del bot posta una nuova immagine solo se entrambi i feed sono stati aggiornati entro le rispettive finestre di tempo, per evitare di postare un'immagine vecchia con un titolo nuovo.
 
 import requests
 import feedparser
@@ -14,11 +15,11 @@ from mastodon import Mastodon
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
 indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 
-#Periodi
+#Periodi Temporali
 #Gli sleep sono il tempo che passa fra due dowload dal web
 sleep_rss = 20
 sleep_immagine = 20
-#Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dop essere cambiati
+#Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dopo essere cambiati
 finestra_rss = 60
 finestra_immagine = 60
 
@@ -107,35 +108,17 @@ class Immagine:
 
 #Gestione Mastodon
 mastodon = Mastodon(client_id = 'Telepython_client.secret')
-mastodon.log_in([LOGIN], to_file= 'Telepython_utente.secret', scopes=['write'])
+mastodon.log_in(credenziali_mastodon.email, credenziali_mastodon.password, to_file= 'Telepython_utente.secret', scopes=['write'])
 
-def posta_immagine(titolo, descrizione):
-    media = mastodon.media_post('ultim_ora.png', description= descrizione)
+def posta_immagine(immagine, titolo, descrizione) -> None:
+    media = mastodon.media_post(immagine, mime_type= 'image/png', description= descrizione)
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
-#Loop
-ora_precedente = time.gmtime()
-while True:
-    feed_rss = apri_rss(indirizzo_feed)
-    if feed_rss is None:
-        time.sleep(10)
-        continue
-    time.sleep(20)
-    #Ritardo qui per essere sicuro di prendere l'immagine dopo l'aggiornamento
+#Ciclo principale
+rss = RSS(sleep_rss, finestra_rss, indirizzo_feed)
+immagine = Immagine(indirizzo_immagine, sleep_immagine, finestra_immagine)
 
-    ora_corrente = ora_ultima(feed_rss)
-    if ora_corrente is None:
-        continue  
-    if ora_corrente > ora_precedente:
-        immagine_corrente = scarica_immagine(indirizzo_immagine)
-        if immagine_corrente is None:
-            #In caso di errore attende un altro ciclo
-            continue
-        try:
-            titolo = feed_rss.entries[0].title + "\n\n" + "#Ultimora"
-            descrizione = feed_rss.entries[0].summary
-        except:
-            continue
-        ora_precedente = ora_corrente
-        immagine_corrente.save("ultim_ora.png")
-        posta_immagine(titolo, descrizione)
+while True:
+    if rss.se_nuovo() and immagine.se_nuovo():
+        posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
+    time.sleep(10)
