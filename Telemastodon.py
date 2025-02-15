@@ -6,6 +6,7 @@ from io import BytesIO
 import feedparser
 import time
 from mastodon import Mastodon
+from Credenziali import mastodon as LOGIN
 
 #Gestione immagine
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
@@ -37,7 +38,7 @@ def ora_ultima(feed):
 
 #Gestione Mastodon
 mastodon = Mastodon(client_id = 'Telepython_client.secret')
-mastodon.log_in([LOGIN], to_file= 'Telepython_utente.secret', scopes=['write'])
+mastodon.log_in(LOGIN.email, LOGIN.password, to_file= 'Telepython_utente.secret', scopes=['write'])
 
 def posta_immagine(titolo, descrizione):
     media = mastodon.media_post('ultim_ora.png', description= descrizione)
