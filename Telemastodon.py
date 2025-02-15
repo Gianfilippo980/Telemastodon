@@ -10,6 +10,7 @@ from PIL import Image
 from io import BytesIO
 from hashlib import md5 as hasher
 from mastodon import Mastodon
+from Credenziali import mastodon as LOGIN
 
 #Indirizzi
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
