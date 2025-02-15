@@ -20,8 +20,8 @@ indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 sleep_rss = 20
 sleep_immagine = 20
 #Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dopo essere cambiati
-finestra_rss = 60
-finestra_immagine = 60
+finestra_rss = 600
+finestra_immagine = 600
 
 class RSS:
     def __init__(self, intervallo_controlli : int, finestra_novità : int, indirizzo : str) -> None:
@@ -73,7 +73,7 @@ class RSS:
 class Immagine:
     def __init__(self, indirizzo : str, intervallo_controlli : int, finestra_novità : int) -> None:
         self.indirizzo = indirizzo
-        self.ora_ultimo_cambio = time.gmtime()
+        self.ora_ultimo_cambio = time.time()
         self.intervallo = intervallo_controlli
         self.finestra = finestra_novità
         self._stop = threading.Event()
@@ -103,12 +103,12 @@ class Immagine:
             if self.immagine is None:
                 self.immagine = nuova_immagine
             if hasher(nuova_immagine.tobytes()).digest() != hasher(self.immagine.tobytes()).digest():
-                self.ora_ultimo_cambio = time.gmtime()
+                self.ora_ultimo_cambio = time.time()
                 self.immagine = nuova_immagine
                 self.postato = False
 
     def se_nuovo(self) -> bool:
-        tempo = time.time() - 3_600 - time.mktime(self.ora_ultimo_cambio) < self.finestra
+        tempo = time.time() - self.ora_ultimo_cambio < self.finestra
         contenuto = self.immagine is not None
         return tempo and contenuto and not self.postato
 
@@ -129,6 +129,7 @@ immagine = Immagine(indirizzo_immagine, sleep_immagine, finestra_immagine)
 
 while True:
     if rss.se_nuovo() and immagine.se_nuovo():
+        print("Posto")
         posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
         rss.postato = True
         immagine.postato = True
