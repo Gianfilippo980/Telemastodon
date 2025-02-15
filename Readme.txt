@@ -1,4 +1,5 @@
 # TeleMastodon
+
 Questo progetto è un bot per pubblicare l'immagine delle ultime notizie dal servizio Televideo italiano su Mastodon.
 
 ## File
