@@ -32,6 +32,8 @@ class RSS:
         self._stop = threading.Event()
         self.thread = threading.Thread(target= self._ciclo)
         self.thread.start()
+        self.lancio = None
+        self.postato = True
 
     def _ciclo(self) -> None:
         while not self._stop.is_set():
@@ -40,10 +42,11 @@ class RSS:
 
     def aggiorna(self) -> None:
         try:
-            self.lacnio = feedparser.parse(self.indirizzo).entries[0]
+            self.lancio = feedparser.parse(self.indirizzo).entries[0]
             ora_corrente = self.lancio.published_parsed
             if ora_corrente > self.ora_ultimo_cambio:
                 self.ora_ultimo_cambio = ora_corrente
+                self.postato = False
         except:
             print("Errore RSS")
 
@@ -63,7 +66,9 @@ class RSS:
         
     def se_nuovo(self) -> bool:
         #Restituisce True se il lancio RSS è stato aggiornato entro la finestra di tempo
-        return time.gmtime() - self.ora_ultimo_cambio < self.finestra
+        tempo = time.time() - 3_600 - time.mktime(self.ora_ultimo_cambio) < self.finestra
+        contenuto = self.lancio is not None
+        return tempo and contenuto and not self.postato
 
 class Immagine:
     def __init__(self, indirizzo : str, intervallo_controlli : int, finestra_novità : int) -> None:
@@ -75,15 +80,16 @@ class Immagine:
         self.thread = threading.Thread(target= self._ciclo)
         self.thread.start()
         self.immagine = None
+        self.postato = True
 
     def _ciclo(self) -> None:
         while not self._stop.is_set():
             self.aggiorna()
             time.sleep(self.intervallo)
 
-    def scarica_immagine(url) -> Image.Image | None:
+    def scarica_immagine(self) -> Image.Image | None:
         try:
-            risposta = requests.get(url)
+            risposta = requests.get(self.indirizzo)
             risposta.raise_for_status()
             immagine = Image.open(BytesIO(risposta.content))
             return immagine
@@ -92,26 +98,29 @@ class Immagine:
             return None
     
     def aggiorna(self) -> None:
-        nuova_immagine = self.scarica_immagine(self.indirizzo)
+        nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
-            self.ora_ultimo_cambio = time.gmtime()
-            self.immagine = nuova_immagine
+            if self.immagine is None:
+                self.immagine = nuova_immagine
+            if hasher(nuova_immagine.tobytes()).digest() != hasher(self.immagine.tobytes()).digest():
+                self.ora_ultimo_cambio = time.gmtime()
+                self.immagine = nuova_immagine
+                self.postato = False
 
     def se_nuovo(self) -> bool:
-        return time.gmtime() - self.ora_ultimo_cambio < self.finestra
-    
-    def immagine(self) -> Image.Image | None:
-        try:
-            return self.immagine
-        except:
-            return None
+        tempo = time.time() - 3_600 - time.mktime(self.ora_ultimo_cambio) < self.finestra
+        contenuto = self.immagine is not None
+        return tempo and contenuto and not self.postato
+
 
 #Gestione Mastodon
 mastodon = Mastodon(client_id = 'Telepython_client.secret')
 mastodon.log_in(credenziali_mastodon.email, credenziali_mastodon.password, to_file= 'Telepython_utente.secret', scopes=['write'])
 
 def posta_immagine(immagine, titolo, descrizione) -> None:
-    media = mastodon.media_post(immagine, mime_type= 'image/png', description= descrizione)
+    bytes= BytesIO()
+    immagine.save(bytes, format= 'PNG')
+    media = mastodon.media_post(bytes.getvalue(), mime_type= 'image/png', description= descrizione)
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
@@ -121,4 +130,6 @@ immagine = Immagine(indirizzo_immagine, sleep_immagine, finestra_immagine)
 while True:
     if rss.se_nuovo() and immagine.se_nuovo():
         posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
+        rss.postato = True
+        immagine.postato = True
     time.sleep(10)
