@@ -23,9 +23,9 @@ sleep_immagine = 20
 sleep_post = 10
 #Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dopo essere cambiati
 finestra_rss = 600
-finestra_immagine = 300
+finestra_immagine = 180
 #Poiché alle volte l'immagine viene aggiornata nello stesso momento in cui il feed viene aggiornato, ma con ancora il precedente contenuto, si introduce un ritardo per l'apertura della finestra del feed RSS
-ritardo_finestra_rss = 40
+ritardo_finestra_rss = 60
 
 class RSS:
     def __init__(self, intervallo_controlli : int, finestra_novità : int, ritado_finestra: int, indirizzo : str) -> None:
