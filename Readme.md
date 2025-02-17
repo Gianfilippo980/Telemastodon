@@ -1,6 +1,6 @@
 # TeleMastodon
 
-Questo progetto è un bot per pubblicare l'immagine delle ultime notizie dal servizio Televideo italiano su Mastodon.
+Questo progetto è un bot per pubblicare l'immagine delle ultime notizie dal servizio Televideo italiano su Mastodon, viene utilizzato dal bot: [@Televideo_bot@mstdn.social](https://mstdn.social/@Televideo_bot)
 
 ## File
 
