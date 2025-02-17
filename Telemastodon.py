@@ -20,15 +20,19 @@ indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 #Gli sleep sono il tempo che passa fra due dowload dal web
 sleep_rss = 20
 sleep_immagine = 20
+sleep_post = 10
 #Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dopo essere cambiati
 finestra_rss = 600
 finestra_immagine = 600
+#Poiché alle volte l'immagine viene aggiornata nello stesso momento in cui il feed viene aggiornato, ma con ancora il precedente contenuto, si introduce un ritardo per l'apertura della finestra del feed RSS
+ritardo_finestra_rss = 40
 
 class RSS:
-    def __init__(self, intervallo_controlli : int, finestra_novità : int, indirizzo : str) -> None:
+    def __init__(self, intervallo_controlli : int, finestra_novità : int, ritado_finestra: int, indirizzo : str) -> None:
         self.indirizzo = indirizzo
-        self.intervallo = intervallo_controlli
+        self.sleep = intervallo_controlli
         self.finestra = finestra_novità
+        self.ritardo_finestra = ritado_finestra
         self.ora_ultimo_cambio = time.gmtime()
         self._stop = threading.Event()
         self.thread = threading.Thread(target= self._ciclo)
@@ -39,7 +43,7 @@ class RSS:
     def _ciclo(self) -> None:
         while not self._stop.is_set():
             self.aggiorna()
-            time.sleep(self.intervallo)
+            time.sleep(self.sleep)
 
     def aggiorna(self) -> None:
         try:
@@ -67,9 +71,10 @@ class RSS:
         
     def se_nuovo(self) -> bool:
         #Restituisce True se il lancio RSS è stato aggiornato entro la finestra di tempo
-        tempo = time.time() - 3_600 - time.mktime(self.ora_ultimo_cambio) < self.finestra
+        tempo = time.time() - 3_600 - time.mktime(self.ora_ultimo_cambio)
+        controllo_tempo = tempo > self.ritardo_finestra and tempo < self.finestra + self.ritardo_finestra
         contenuto = self.lancio is not None
-        return tempo and contenuto and not self.postato
+        return controllo_tempo and contenuto and not self.postato
 
 class Immagine:
     def __init__(self, indirizzo : str, intervallo_controlli : int, finestra_novità : int) -> None:
@@ -125,7 +130,7 @@ def posta_immagine(immagine, titolo, descrizione) -> None:
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
-rss = RSS(sleep_rss, finestra_rss, indirizzo_feed)
+rss = RSS(sleep_rss, finestra_rss, ritardo_finestra_rss, indirizzo_feed)
 immagine = Immagine(indirizzo_immagine, sleep_immagine, finestra_immagine)
 
 while True:
@@ -134,4 +139,4 @@ while True:
         posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
         rss.postato = True
         immagine.postato = True
-    time.sleep(10)
+    time.sleep(sleep_post)
