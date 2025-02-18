@@ -7,6 +7,7 @@ import time
 import threading
 from Credenziali import mastodon as credenziali_mastodon
 from PIL import Image
+import pytesseract
 from io import BytesIO
 from hashlib import md5 as hasher
 from mastodon import Mastodon
