@@ -56,11 +56,7 @@ class RSS:
             print("Errore RSS")
 
     def filtra_link(self, testo : str) -> str:
-<<<<<<< HEAD
         #Rimuove i link dal testo, alle volte presenti nel sommario sotto la forma di <a href="...">...</a> e che di solito non portano da nessuna parte
-=======
-        #Rimuove i link dal testo, alle volte presenti nel sommario sotto la forma di <a href="...">...</a>
->>>>>>> 713394823ca35951f5b3f0f67501192db4033861
         if "<a" in testo:
             inizio = testo.find("<a")
             fine = testo.find(">", inizio)
