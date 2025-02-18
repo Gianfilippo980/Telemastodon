@@ -125,6 +125,18 @@ class Immagine:
                 self.immagine = nuova_immagine
                 self.postato = False
 
+    def riconosci_orario(self) -> str | None:
+        if self.immagine is None:
+            return None
+        # Ritaglia la zona in alto a sinistra (adatta le coordinate secondo necessità)
+        zona_orario = self.immagine.crop((0, 0, 100, 50))
+        testo = pytesseract.image_to_string(zona_orario, config='--psm 7')
+        # Cerca un orario nel formato HH.MM
+        match = re.search(r'\b\d{2}\.\d{2}\b', testo)
+        if match:
+            return match.group(0)
+        return None
+
     def se_nuovo(self) -> bool:
         tempo = time.time() - self.ora_ultimo_cambio < self.finestra
         contenuto = self.immagine is not None
