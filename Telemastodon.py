@@ -1,18 +1,17 @@
 """Bot per il caricamento su Mastodon dell'immagine dell'ultimora del Televideo"""
 #Questa versine del bot posta una nuova immagine solo se entrambi i feed sono stati aggiornati entro le rispettive finestre di tempo, per evitare di postare un'immagine vecchia con un titolo nuovo.
 
+import re
 import requests
 import feedparser
 import time
 import threading
-from Credenziali import mastodon as credenziali_mastodon
 from PIL import Image
 import pytesseract
 from io import BytesIO
-from hashlib import md5 as hasher
 from mastodon import Mastodon
-from Credenziali import mastodon as LOGIN
-import re
+from Credenziali import mastodon as credenziali_mastodon
+
 
 #Indirizzi
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
