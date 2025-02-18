@@ -55,6 +55,16 @@ class RSS:
         except:
             print("Errore RSS")
 
+    def filtra_link(self, testo : str) -> str:
+        #Rimuove i link dal testo, alle volte presenti nel sommario sotto la forma di <a href="...">...</a>
+        if "<a" in testo:
+            inizio = testo.find("<a")
+            fine = testo.find(">", inizio)
+            testo = testo[:inizio] + testo[fine + 1:]
+            inizio = testo.find("</a>")
+            testo = testo[:inizio] + testo[inizio + 4:]
+        return testo
+
     def titolo(self) -> str | None:
         #Restituisce il titolo dell'ultimo lancio RSS scaricato
         try:
@@ -65,7 +75,8 @@ class RSS:
     def descrizione(self) -> str | None:
         #Restituisce il sommario dell'ultimo lancio RSS scaricato
         try:
-            return self.lancio.summary
+            testo = self.filtra_link(self.lancio.summary)
+            return testo
         except:
             return None
         
