@@ -12,6 +12,7 @@ from io import BytesIO
 from hashlib import md5 as hasher
 from mastodon import Mastodon
 from Credenziali import mastodon as LOGIN
+import re
 
 #Indirizzi
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
@@ -22,24 +23,19 @@ indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 sleep_rss = 20
 sleep_immagine = 20
 sleep_post = 10
-#Le finestre sono la finestra di tempo per la quale i due feed sono considerati "nuovi" dopo essere cambiati
-finestra_rss = 600
-finestra_immagine = 300
-#Poiché alle volte l'immagine viene aggiornata nello stesso momento in cui il feed viene aggiornato, ma con ancora il precedente contenuto, si introduce un ritardo per l'apertura della finestra del feed RSS
-ritardo_finestra_rss = 60
+#La finestra è la differenza di tempo enrto la quale immagine e notizia sono considerate contemporanee
+finestra = 120
 
 class RSS:
-    def __init__(self, intervallo_controlli : int, finestra_novità : int, ritado_finestra: int, indirizzo : str) -> None:
+    def __init__(self, intervallo_controlli : int, indirizzo : str) -> None:
         self.indirizzo = indirizzo
         self.sleep = intervallo_controlli
-        self.finestra = finestra_novità
-        self.ritardo_finestra = ritado_finestra
-        self.ora_ultimo_cambio = time.gmtime()
+        self.ora_ultima = time.localtime()
         self._stop = threading.Event()
         self.thread = threading.Thread(target= self._ciclo)
         self.thread.start()
         self.lancio = None
-        self.postato = True
+        self.nuovo = False
 
     def _ciclo(self) -> None:
         while not self._stop.is_set():
@@ -48,11 +44,13 @@ class RSS:
 
     def aggiorna(self) -> None:
         try:
-            self.lancio = feedparser.parse(self.indirizzo).entries[0]
-            ora_corrente = self.lancio.published_parsed
-            if ora_corrente > self.ora_ultimo_cambio:
-                self.ora_ultimo_cambio = ora_corrente
-                self.postato = False
+            nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
+            #Aggiunge un'ora per il fuso orario
+            ora_lancio = time.localtime(time.mktime(nuovo_lancio.published_parsed) + 3_600)
+            if ora_lancio > self.ora_ultima:
+                self.ora_ultima = ora_lancio
+                self.lancio = nuovo_lancio
+                self.nuovo = True
         except:
             print("Errore RSS")
 
@@ -80,25 +78,17 @@ class RSS:
             return testo
         except:
             return None
-        
-    def se_nuovo(self) -> bool:
-        #Restituisce True se il lancio RSS è stato aggiornato entro la finestra di tempo
-        tempo = time.time() - 3_600 - time.mktime(self.ora_ultimo_cambio)
-        controllo_tempo = tempo > self.ritardo_finestra and tempo < self.finestra + self.ritardo_finestra
-        contenuto = self.lancio is not None
-        return controllo_tempo and contenuto and not self.postato
 
 class Immagine:
-    def __init__(self, indirizzo : str, intervallo_controlli : int, finestra_novità : int) -> None:
+    def __init__(self, indirizzo : str, intervallo_controlli : int) -> None:
         self.indirizzo = indirizzo
-        self.ora_ultimo_cambio = time.time()
+        self.ora_immagine = time.localtime()
         self.intervallo = intervallo_controlli
-        self.finestra = finestra_novità
         self._stop = threading.Event()
         self.thread = threading.Thread(target= self._ciclo)
         self.thread.start()
         self.immagine = None
-        self.postato = True
+        self.nuovo = False
 
     def _ciclo(self) -> None:
         while not self._stop.is_set():
@@ -118,30 +108,26 @@ class Immagine:
     def aggiorna(self) -> None:
         nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
-            if self.immagine is None:
+            nuova_ora = self.riconosci_orario()
+            print(nuova_ora)
+            if nuova_ora is not None and nuova_ora > self.ora_immagine:
                 self.immagine = nuova_immagine
-            if hasher(nuova_immagine.tobytes()).digest() != hasher(self.immagine.tobytes()).digest():
-                self.ora_ultimo_cambio = time.time()
-                self.immagine = nuova_immagine
-                self.postato = False
+                self.ora_immagine = nuova_ora
+                self.nuovo = True
 
-    def riconosci_orario(self) -> str | None:
+    def riconosci_orario(self) -> time.struct_time | None:
         if self.immagine is None:
             return None
-        # Ritaglia la zona in alto a sinistra (adatta le coordinate secondo necessità)
-        zona_orario = self.immagine.crop((0, 0, 100, 50))
+        zona_orario = self.immagine.crop((23, 27, 119, 52))
         testo = pytesseract.image_to_string(zona_orario, config='--psm 7')
         # Cerca un orario nel formato HH.MM
         match = re.search(r'\b\d{2}\.\d{2}\b', testo)
         if match:
-            return match.group(0)
+            data = ''
+            for t in time.localtime()[:3]:
+                data += str(t) + '.'
+            return time.strptime(data + match.group(0), "%Y.%m.%d.%H.%M")
         return None
-
-    def se_nuovo(self) -> bool:
-        tempo = time.time() - self.ora_ultimo_cambio < self.finestra
-        contenuto = self.immagine is not None
-        return tempo and contenuto and not self.postato
-
 
 #Gestione Mastodon
 mastodon = Mastodon(client_id = 'Telepython_client.secret')
@@ -154,13 +140,13 @@ def posta_immagine(immagine, titolo, descrizione) -> None:
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
-rss = RSS(sleep_rss, finestra_rss, ritardo_finestra_rss, indirizzo_feed)
-immagine = Immagine(indirizzo_immagine, sleep_immagine, finestra_immagine)
+rss = RSS(sleep_rss, indirizzo_feed)
+immagine = Immagine(indirizzo_immagine, sleep_immagine)
 
 while True:
-    if rss.se_nuovo() and immagine.se_nuovo():
+    if rss.nuovo and immagine.nuovo and time.mktime(rss.ora_ultima) - time.mktime(immagine.ora_immagine) < finestra:
         print("Posto")
         posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
-        rss.postato = True
-        immagine.postato = True
+        rss.nuovo = False
+        immagine.nuovo = False
     time.sleep(sleep_post)
