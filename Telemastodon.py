@@ -118,7 +118,7 @@ class Immagine:
     def riconosci_orario(self, immagine : Image) -> time.struct_time | None:
         if immagine is None:
             return None
-        zona_orario = immagine.crop((25, 27, 119, 52))
+        zona_orario = immagine.crop((22, 24, 121, 55))
         testo = pytesseract.image_to_string(zona_orario, config='--psm 7')
         # Cerca un orario nel formato HH.MM
         match = re.search(r'\b\d{2}\.\d{2}\b', testo)
