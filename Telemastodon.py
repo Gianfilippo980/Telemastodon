@@ -46,7 +46,7 @@ class RSS:
             nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
             #Aggiunge un'ora per il fuso orario
             ora_lancio = time.localtime(time.mktime(nuovo_lancio.published_parsed) + 3_600)
-            print(ora_lancio)
+            print("ora rss:", ora_lancio)
             if ora_lancio > self.ora_ultima:
                 self.ora_ultima = ora_lancio
                 self.lancio = nuovo_lancio
@@ -109,7 +109,7 @@ class Immagine:
         nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
             nuova_ora = self.riconosci_orario(nuova_immagine)
-            print(nuova_ora)
+            print("ora immagine:", nuova_ora)
             if nuova_ora is not None and nuova_ora > self.ora_immagine:
                 self.immagine = nuova_immagine
                 self.ora_immagine = nuova_ora
@@ -121,6 +121,7 @@ class Immagine:
         zona_orario = immagine.crop((22, 24, 121, 55))
         testo = pytesseract.image_to_string(zona_orario, config='--psm 7')
         # Cerca un orario nel formato HH.MM
+        testo = re.sub(r'[^0-9.]', '', testo)
         match = re.search(r'\b\d{2}\.\d{2}\b', testo)
         if match:
             data = ''
