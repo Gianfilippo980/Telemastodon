@@ -40,7 +40,7 @@ def main() -> None:
         immagine = scarica_immagine(indirizzo_immagine)
         if immagine is not None:
             nuovo_testo = riconosci_testo(immagine)
-            nuova_ora = orario(testo)
+            nuova_ora = orario(nuovo_testo)
             if nuovo_testo != testo:
                 print ("Nuovo testo:", nuovo_testo)
                 testo = nuovo_testo
