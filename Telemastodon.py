@@ -1,11 +1,10 @@
 """Bot per il caricamento su Mastodon dell'immagine dell'ultimora del Televideo"""
-#Questa versine del bot posta una nuova immagine solo se entrambi i feed sono stati aggiornati entro le rispettive finestre di tempo, per evitare di postare un'immagine vecchia con un titolo nuovo.
+# Questa versine del bot usa l'OCR per riconosce l'ora dell'immagine e la confronta con l'ora dell'ultima notizia RSS, se le due ore coincidono entro una finestra, il bot posta l'immagine e il sommario della notizia su Mastodon
 
 import re
 import requests
 import feedparser
 import time
-import threading
 from PIL import Image
 import pytesseract
 from io import BytesIO
@@ -18,41 +17,29 @@ indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazional
 indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 
 #Periodi Temporali
-#Gli sleep sono il tempo che passa fra due dowload dal web
-sleep_rss = 20
-sleep_immagine = 20
-sleep_post = 10
-#La finestra è la differenza di tempo enrto la quale immagine e notizia sono considerate contemporanee
+sleep = 20
 finestra = 120
 
 class RSS:
-    def __init__(self, intervallo_controlli : int, indirizzo : str) -> None:
+    def __init__(self, indirizzo : str) -> None:
         self.indirizzo = indirizzo
-        self.sleep = intervallo_controlli
-        self.ora_ultima = time.localtime()
-        self._stop = threading.Event()
-        self.thread = threading.Thread(target= self._ciclo)
-        self.thread.start()
+        self.ora = time.localtime()
         self.lancio = None
         self.nuovo = False
 
-    def _ciclo(self) -> None:
-        while not self._stop.is_set():
-            self.aggiorna()
-            time.sleep(self.sleep)
-
-    def aggiorna(self) -> None:
+    def aggiorna(self) -> time.struct_time:
         try:
             nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
             #Aggiunge un'ora per il fuso orario
             ora_lancio = time.localtime(time.mktime(nuovo_lancio.published_parsed) + 3_600)
-            if ora_lancio > self.ora_ultima:
-                self.ora_ultima = ora_lancio
+            if ora_lancio > self.ora:
+                self.ora = ora_lancio
                 self.lancio = nuovo_lancio
                 self.nuovo = True
                 print("ora rss:     ", ora_lancio)
         except:
             print("Errore RSS")
+        return self.ora
 
     def filtra_link(self, testo : str) -> str:
         #Rimuove i link dal testo, alle volte presenti nel sommario sotto la forma di <a href="...">...</a> e che di solito non portano da nessuna parte
@@ -80,20 +67,11 @@ class RSS:
             return None
 
 class Immagine:
-    def __init__(self, indirizzo : str, intervallo_controlli : int) -> None:
+    def __init__(self, indirizzo : str) -> None:
         self.indirizzo = indirizzo
-        self.ora_immagine = time.localtime()
-        self.intervallo = intervallo_controlli
-        self._stop = threading.Event()
-        self.thread = threading.Thread(target= self._ciclo)
-        self.thread.start()
+        self.ora = time.localtime()
         self.immagine = None
         self.nuovo = False
-
-    def _ciclo(self) -> None:
-        while not self._stop.is_set():
-            self.aggiorna()
-            time.sleep(self.intervallo)
 
     def scarica_immagine(self) -> Image.Image | None:
         try:
@@ -105,16 +83,16 @@ class Immagine:
             print("Errore immagine")
             return None
     
-    def aggiorna(self) -> None:
+    def aggiorna(self) -> time.struct_time:
         nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
             nuova_ora = self.riconosci_orario(nuova_immagine)
-            if nuova_ora is not None and nuova_ora > self.ora_immagine:
+            if nuova_ora is not None and nuova_ora > self.ora:
                 self.immagine = nuova_immagine
-                time.sleep(1)
-                self.ora_immagine = nuova_ora
+                self.ora = nuova_ora
                 self.nuovo = True
                 print("ora immagine:", nuova_ora)
+        return self.ora
 
     def riconosci_orario(self, immagine : Image) -> time.struct_time | None:
         if immagine is None:
@@ -125,14 +103,26 @@ class Immagine:
         testo = re.sub(r'[^0-9.]', '', testo)
         testo = testo.split('.')
         if len(testo) == 2:
-            ora = float(testo[0])
-            minuti = float(testo[1])
-            if ora >0 and ora < 24 and minuti >= 0 and minuti < 60:
+            # Alle volte l'OCR confonde uno zero con un otto o con un 9 e restituisce un orario impossibile, questo succede soprattutto con le ore, che a volte hanno una sola cifra
+            orario = [str(time.localtime().tm_hour), str(time.localtime().tm_min)]
+            # Controlliamo le ore
+            if int(testo[0]) - int(orario[0]) > 1:
+                if len(testo[0]) < len(orario[0]):
+                    testo[0] = '0'+ testo[0]                  
+                for carattere_OCR, carattere_orario in zip(testo[0], orario[0]):
+                    if carattere_OCR != carattere_orario:
+                        if carattere_OCR == '8' or carattere_OCR == '9' and carattere_orario == '0':
+                            testo[0] = orario[0]
+                            break 
+            orario_testo = [int(numero) for numero in testo]   
+            if orario_testo[0] >0 and orario_testo[0] < 24 and orario_testo[1] >= 0 and orario_testo[1] < 60:
                 data = ''
                 for t in time.localtime()[:3]:
                     data += str(t) + '.'
                 return time.strptime(data + testo[0] + '.' + testo[1], "%Y.%m.%d.%H.%M")
-        return None
+        else:
+            print("Errore orario")
+            return None
 
 #Gestione Mastodon
 mastodon = Mastodon(client_id = 'Telepython_client.secret')
@@ -145,13 +135,13 @@ def posta_immagine(immagine, titolo, descrizione) -> None:
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
-rss = RSS(sleep_rss, indirizzo_feed)
-immagine = Immagine(indirizzo_immagine, sleep_immagine)
+rss = RSS(indirizzo_feed)
+immagine = Immagine(indirizzo_immagine)
 
 while True:
-    if rss.nuovo and immagine.nuovo and time.mktime(rss.ora_ultima) - time.mktime(immagine.ora_immagine) < finestra:
+    if rss.nuovo and immagine.nuovo and time.mktime(rss.ora) - time.mktime(immagine.ora) < finestra:
         print("Posto")
         posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
         rss.nuovo = False
         immagine.nuovo = False
-    time.sleep(sleep_post)
+    time.sleep(sleep)
