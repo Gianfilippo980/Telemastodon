@@ -113,8 +113,12 @@ class Immagine:
                     if carattere_OCR != carattere_orario:
                         if carattere_OCR == '8' or carattere_OCR == '9' and carattere_orario == '0':
                             testo[0] = orario[0]
-                            break 
-            orario_testo = [int(numero) for numero in testo]   
+                            break  
+            # Per i minuti il problema pricipale è che, alle volte, appare un 77
+            if int(testo[1]) > 59:
+                testo[1] = time.localtime().tm_min
+            
+            orario_testo = [int(numero) for numero in testo]
             if orario_testo[0] >0 and orario_testo[0] < 24 and orario_testo[1] >= 0 and orario_testo[1] < 60:
                 data = ''
                 for t in time.localtime()[:3]:
