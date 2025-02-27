@@ -40,13 +40,10 @@ def main() -> None:
         immagine = scarica_immagine(indirizzo_immagine)
         if immagine is not None:
             nuovo_testo = riconosci_testo(immagine)
-            nuova_ora = orario(nuovo_testo)
+            ora_vera = str(time.localtime().tm_hour) + ':' + str(time.localtime().tm_min)
             if nuovo_testo != testo:
-                print ("Nuovo testo:", nuovo_testo)
+                print(ora_vera, '->', nuovo_testo)
                 testo = nuovo_testo
-            if nuova_ora != ora:
-                print("Nuova ora:", nuova_ora)
-                ora = nuova_ora
         time.sleep(20)
         
 if __name__ == '__main__':
