@@ -47,10 +47,11 @@ class RSS:
 
     def aggiorna(self) -> None:
         try:
-            self.lancio = feedparser.parse(self.indirizzo).entries[0]
-            ora_corrente = self.lancio.published_parsed
+            nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
+            ora_corrente = nuovo_lancio.published_parsed
             if ora_corrente > self.ora_ultimo_cambio:
                 self.ora_ultimo_cambio = ora_corrente
+                self.lancio = nuovo_lancio
                 self.postato = False
         except:
             print("Errore RSS")
