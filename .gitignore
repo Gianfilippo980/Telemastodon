@@ -6,3 +6,4 @@ Launcher.sh
 __pycache__
 env
 *.png
+output.txt
