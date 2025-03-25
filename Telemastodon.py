@@ -49,7 +49,7 @@ class RSS:
         try:
             nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
             ora_corrente = nuovo_lancio.published_parsed
-            if ora_corrente > self.ora_ultimo_cambio:
+            if ora_corrente <= time.gmtime() and ora_corrente > self.ora_ultimo_cambio:
                 self.ora_ultimo_cambio = ora_corrente
                 self.lancio = nuovo_lancio
                 self.postato = False
