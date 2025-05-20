@@ -5,12 +5,11 @@ import requests
 import feedparser
 import time
 import threading
-from Credenziali import mastodon as credenziali_mastodon
+from Credenziali import mastodon_televideo as credenziali_mastodon
 from PIL import Image
 from io import BytesIO
 from hashlib import md5 as hasher
 from mastodon import Mastodon
-from Credenziali import mastodon as LOGIN
 
 #Indirizzi
 indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
@@ -37,7 +36,7 @@ class RSS:
         self._stop = threading.Event()
         self.thread = threading.Thread(target= self._ciclo)
         self.thread.start()
-        self.lancio = None
+        self.lancio : feedparser.FeedParserDict | None = None
         self.postato = True
 
     def _ciclo(self) -> None:
@@ -48,13 +47,21 @@ class RSS:
     def aggiorna(self) -> None:
         try:
             nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
-            ora_corrente = nuovo_lancio.published_parsed
-            if ora_corrente <= time.gmtime() and ora_corrente > self.ora_ultimo_cambio:
-                self.ora_ultimo_cambio = ora_corrente
-                self.lancio = nuovo_lancio
-                self.postato = False
+            if not isinstance(nuovo_lancio.published_parsed, time.struct_time):
+                raise ValueError("Il feed non contiene un timestamp valido.")
+            if not isinstance(nuovo_lancio.summary, str):
+                raise ValueError("Il feed non contiene un sommario valido.")
+            if not isinstance(nuovo_lancio.title, str):
+                raise ValueError("Il feed non contiene un titolo valido.")
         except:
             print("Errore RSS")
+            return
+        
+        ora_corrente: time.struct_time = nuovo_lancio.published_parsed    
+        if ora_corrente > self.ora_ultimo_cambio:
+            self.ora_ultimo_cambio = ora_corrente
+            self.lancio = nuovo_lancio
+            self.postato = False
 
     def filtra_link(self, testo : str) -> str:
         #Rimuove i link dal testo, alle volte presenti nel sommario sotto la forma di <a href="...">...</a> e che di solito non portano da nessuna parte
@@ -68,17 +75,17 @@ class RSS:
 
     def titolo(self) -> str | None:
         #Restituisce il titolo dell'ultimo lancio RSS scaricato
-        try:
+        if self.lancio != None and isinstance(self.lancio.title, str):
             return self.lancio.title + "\n\n" + "#Televideo #Ultimora"
-        except:
-            return None 
+        else:
+            return None
         
     def descrizione(self) -> str | None:
         #Restituisce il sommario dell'ultimo lancio RSS scaricato
-        try:
+        if self.lancio != None and isinstance(self.lancio.summary, str):
             testo = self.filtra_link(self.lancio.summary)
             return testo
-        except:
+        else:
             return None
         
     def se_nuovo(self) -> bool:
@@ -138,7 +145,7 @@ mastodon.log_in(credenziali_mastodon.email, credenziali_mastodon.password, to_fi
 def posta_immagine(immagine, titolo, descrizione) -> None:
     bytes= BytesIO()
     immagine.save(bytes, format= 'PNG')
-    media = mastodon.media_post(bytes.getvalue(), mime_type= 'image/png', description= descrizione)
+    media = mastodon.media_post(bytes, mime_type= 'image/png', description= descrizione)
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
