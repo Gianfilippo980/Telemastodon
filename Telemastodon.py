@@ -53,17 +53,17 @@ class RSS:
 
     def titolo(self) -> str | None:
         #Restituisce il titolo dell'ultimo lancio RSS scaricato
-        try:
+        if self.lancio != None and isinstance(self.lancio.title, str):
             return self.lancio.title + "\n\n" + "#Televideo #Ultimora"
-        except:
-            return None 
+        else:
+            return None
         
     def descrizione(self) -> str | None:
         #Restituisce il sommario dell'ultimo lancio RSS scaricato
-        try:
+        if self.lancio != None and isinstance(self.lancio.summary, str):
             testo = self.filtra_link(self.lancio.summary)
             return testo
-        except:
+        else:
             return None
 
 class Immagine:
@@ -135,7 +135,7 @@ mastodon.log_in(credenziali_mastodon.email, credenziali_mastodon.password, to_fi
 def posta_immagine(immagine, titolo, descrizione) -> None:
     bytes= BytesIO()
     immagine.save(bytes, format= 'PNG')
-    media = mastodon.media_post(bytes.getvalue(), mime_type= 'image/png', description= descrizione)
+    media = mastodon.media_post(bytes, mime_type= 'image/png', description= descrizione)
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
