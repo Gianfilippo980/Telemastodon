@@ -1,6 +1,5 @@
 Credenziali.py
-Telepython_client.secret
-Telepython_utente.secret
+*.secret
 ultim_ora.png
 Launcher.sh
 __pycache__
