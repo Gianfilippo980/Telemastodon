@@ -139,8 +139,7 @@ class Immagine:
 
 
 #Gestione Mastodon
-mastodon = Mastodon(client_id = 'Telepython_client.secret')
-mastodon.log_in(credenziali_mastodon.email, credenziali_mastodon.password, to_file= 'Telepython_utente.secret', scopes=['write'])
+mastodon = Mastodon(access_token= 'mstdn_access.secret')
 
 def posta_immagine(immagine, titolo, descrizione) -> None:
     bytes= BytesIO()
