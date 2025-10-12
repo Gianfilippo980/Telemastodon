@@ -1,0 +1,6 @@
+pytesseract
+pillow
+requests
+feedparser
+Mastodon.py
+opencv-python

@@ -1,15 +1,18 @@
-"""Bot per il caricamento su Mastodon dell'immagine dell'ultimora del Televideo"""
-# Questa versine del bot usa l'OCR per riconosce l'ora dell'immagine e la confronta con l'ora dell'ultima notizia RSS, se le due ore coincidono entro una finestra, il bot posta l'immagine e il sommario della notizia su Mastodon
+"""Bot per il caricamento su Mastodon dell'immagine dell'ultimora del
+Televideo RAI"""
+# Questa versine del bot usa l'OCR per riconosce l'ora dell'immagine e la
+# confronta con l'ora dell'ultima notizia RSS, se le due ore coincidono entro
+# una finestra, il bot posta l'immagine e il sommario della notizia
 
 import re
+import time
+from io import BytesIO
+
 import requests
 import feedparser
-import time
 from PIL import Image
 import pytesseract
-from io import BytesIO
 from mastodon import Mastodon
-from Credenziali import mastodon as credenziali_mastodon
 
 
 #Indirizzi
