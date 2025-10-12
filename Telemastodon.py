@@ -5,7 +5,6 @@ import requests
 import feedparser
 import time
 import threading
-from Credenziali import mastodon_televideo as credenziali_mastodon
 from PIL import Image
 from io import BytesIO
 from hashlib import md5 as hasher
