@@ -25,8 +25,10 @@ def scarica_immagine(indirizzo: str = indirizzo_immagine) -> Image.Image | None:
 def riconosci_testo(immagine: Image.Image) -> str:
     # Ritaglio
     zona_orario = immagine.crop((24, 28, 119, 53))
+    # Converto in Grigio
+    zona_orario = zona_orario.convert("L")
     # Converto in Binario
-    zona_orario = zona_orario.convert("1")
+    zona_orario = zona_orario.point(lambda p: 255 if p > 127 else 0)
     testo = pytesseract.image_to_string(zona_orario, lang='ita',
                                         config='--psm 7')
     testo = re.sub(r'[^0-9.]', '', testo)
