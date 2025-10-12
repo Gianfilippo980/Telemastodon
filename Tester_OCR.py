@@ -11,7 +11,7 @@ indirizzo_immagine: str = ("https://www.televideo.rai.it/televideo/pub/tt4web/"
                            "Nazionale/16_9_page-101.png")
 
 
-def scarica_immagine(indirizzo: str) -> Image.Image | None:
+def scarica_immagine(indirizzo: str = indirizzo_immagine) -> Image.Image | None:
     # try:
     risposta = requests.get(indirizzo)
     risposta.raise_for_status()
