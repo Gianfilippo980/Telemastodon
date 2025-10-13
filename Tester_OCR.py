@@ -17,7 +17,7 @@ def scarica_immagine(indirizzo: str = indirizzo_immagine) -> Image.Image | None:
         risposta.raise_for_status()
         immagine = Image.open(BytesIO(risposta.content))
         return immagine
-    except ConnectionError:
+    except ConnectionError():
         print("Errore connessione")
         return None
 
