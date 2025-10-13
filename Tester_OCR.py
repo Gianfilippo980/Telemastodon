@@ -12,19 +12,17 @@ indirizzo_immagine: str = ("https://www.televideo.rai.it/televideo/pub/tt4web/"
 
 
 def scarica_immagine(indirizzo: str = indirizzo_immagine) -> Image.Image | None:
-    # try:
-    risposta = requests.get(indirizzo)
-    risposta.raise_for_status()
-    immagine = Image.open(BytesIO(risposta.content))
-    return immagine
-#    except:
-#        print("Errore immagine")
-#        return None
+    try:
+        risposta = requests.get(indirizzo)
+        risposta.raise_for_status()
+        immagine = Image.open(BytesIO(risposta.content))
+        return immagine
+    except ConnectionError:
+        print("Errore connessione")
+        return None
 
 
-def riconosci_testo(immagine: Image.Image) -> str:
-    # Ritaglio
-    zona_orario = immagine.crop((24, 28, 119, 53))
+def riconosci_testo(zona_orario: Image.Image) -> str:
     # Converto in Grigio
     zona_orario = zona_orario.convert("L")
     # Converto in Binario
@@ -49,12 +47,16 @@ def main() -> None:
     while True:
         immagine = scarica_immagine(indirizzo_immagine)
         if immagine is not None:
-            nuovo_testo = riconosci_testo(immagine)
+            # Ritaglio
+            zona_orario = immagine.crop((24, 28, 119, 53))
+            nuovo_testo = riconosci_testo(zona_orario)
             ora_vera = (str(time.localtime().tm_hour) + ':'
                         + str(time.localtime().tm_min))
             if nuovo_testo != testo:
                 print(ora_vera, '->', nuovo_testo)
                 testo = nuovo_testo
+                if int(testo[:2]) != int(ora_vera[:2]):
+                    zona_orario.save((ora_vera + '.png'))
         time.sleep(20)
 
 
