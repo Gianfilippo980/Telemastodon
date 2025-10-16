@@ -17,7 +17,7 @@ def scarica_immagine(indirizzo: str = indirizzo_immagine) -> Image.Image | None:
         risposta.raise_for_status()
         immagine = Image.open(BytesIO(risposta.content))
         return immagine
-    except ConnectionError():
+    except:
         print("Errore connessione")
         return None
 
@@ -34,12 +34,12 @@ def riconosci_testo(zona_orario: Image.Image) -> str:
 
 
 def orario(testo: str) -> time.struct_time | None:
-    # try:
-    ora = time.strptime(testo, "%H.%M")
-    return ora
-#    except:
-#        print("Errore orario")
-#        return None
+    try:
+        ora = time.strptime(testo, "%H.%M")
+        return ora
+    except:
+        print("Errore orario")
+        return None
 
 
 def main() -> None:
@@ -50,13 +50,16 @@ def main() -> None:
             # Ritaglio
             zona_orario = immagine.crop((24, 28, 119, 53))
             nuovo_testo = riconosci_testo(zona_orario)
-            ora_vera = (str(time.localtime().tm_hour) + ':'
-                        + str(time.localtime().tm_min))
+            orario_ricezione = time.localtime()
+            ora_vera = (str(orario_ricezione.tm_hour) + ':'
+                        + str(orario_ricezione.tm_min))
             if nuovo_testo != testo:
                 print(ora_vera, '->', nuovo_testo)
                 testo = nuovo_testo
-                if int(testo[:2]) != int(ora_vera[:2]):
-                    zona_orario.save((ora_vera + '.png'))
+                ora_testo = orario(testo)
+                if ora_testo != None:
+                    if ora_testo.tm_hour != orario_ricezione.tm_hour:
+                        zona_orario.save((ora_vera + '.png'))
         time.sleep(20)
 
 
