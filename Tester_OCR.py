@@ -1,28 +1,34 @@
 """Programma per verificare il funzionamento dell'OCR sul televideo"""
 
-import pytesseract
-from PIL import Image
 import time
-import requests
 from io import BytesIO
 import re
+
+import pytesseract
+from PIL import Image
+import requests
 
 indirizzo_immagine: str = ("https://www.televideo.rai.it/televideo/pub/tt4web/"
                            "Nazionale/16_9_page-101.png")
 
 
-def scarica_immagine(indirizzo: str = indirizzo_immagine) -> Image.Image | None:
+def scarica_immagine(
+    indirizzo: str = indirizzo_immagine
+) -> Image.Image | None:
+    """Restituisce l'immagine se riesce a scaricarla, o None se fallisce."""
     try:
-        risposta = requests.get(indirizzo)
+        risposta = requests.get(indirizzo, timeout= 60)
         risposta.raise_for_status()
         immagine = Image.open(BytesIO(risposta.content))
         return immagine
-    except:
-        print("Errore connessione")
+    except requests.exceptions.RequestException as eccezione:
+        print("Errore connessione", eccezione)
         return None
 
 
 def riconosci_testo(zona_orario: Image.Image) -> str:
+    """Esegue l'OCR e restituisce il testo, mi aspetto che l'immagine contenga
+    una sola riga di testo in italiano."""
     # Converto in Grigio
     zona_orario = zona_orario.convert("L")
     # Converto in Binario
@@ -34,15 +40,21 @@ def riconosci_testo(zona_orario: Image.Image) -> str:
 
 
 def orario(testo: str) -> time.struct_time | None:
+    """Restituisce l'orario ricavato dalla stringa in ingresso, assume il
+    formato %H.%M, se il riconoscimento fallisce, restituisce None."""
     try:
         ora = time.strptime(testo, "%H.%M")
         return ora
-    except:
-        print("Errore orario")
+    except ValueError:
+        print("Errore formato orario")
         return None
 
 
 def main() -> None:
+    """Periodicamente scarica l'ultimora del televideo, riconosce l'orario
+    dall'immagine e lo stampa insieme a quello del computer, se i due valori
+    hanno ore diverse, salva il ritaglio di immagine usato per l'OCR per
+    successivi esami."""
     testo = ''
     while True:
         immagine = scarica_immagine(indirizzo_immagine)
@@ -57,10 +69,10 @@ def main() -> None:
                 print(ora_vera, '->', nuovo_testo)
                 testo = nuovo_testo
                 ora_testo = orario(testo)
-                if ora_testo != None:
+                if ora_testo is not None:
                     if ora_testo.tm_hour != orario_ricezione.tm_hour:
                         zona_orario.save((ora_vera + '.png'))
-        time.sleep(20)
+        time.sleep(60)
 
 
 if __name__ == '__main__':
