@@ -15,9 +15,10 @@ import pytesseract
 from mastodon import Mastodon
 
 
-#Indirizzi
-indirizzo_immagine = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
-indirizzo_feed = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
+# Indirizzi
+INDIRIZZO_IMMAGINE  = """https://www.televideo.rai.it/televideo/pub/tt4web/
+                    Nazionale/16_9_page-101.png"""
+INDIRIZZO_FEED      = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 
 #Periodi Temporali
 sleep = 20
@@ -141,8 +142,8 @@ def posta_immagine(immagine, titolo, descrizione) -> None:
     mastodon.status_post(titolo, media_ids= media, language= 'IT')
 
 #Ciclo principale
-rss = RSS(indirizzo_feed)
-immagine = Immagine(indirizzo_immagine)
+rss = RSS(INDIRIZZO_FEED)
+immagine = Immagine(INDIRIZZO_IMMAGINE)
 
 while True:
     if rss.nuovo and immagine.nuovo and time.mktime(rss.ora) - time.mktime(immagine.ora) < finestra:
