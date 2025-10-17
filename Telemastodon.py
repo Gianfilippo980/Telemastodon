@@ -16,34 +16,39 @@ from mastodon import Mastodon
 
 
 # Indirizzi
-INDIRIZZO_IMMAGINE  = """https://www.televideo.rai.it/televideo/pub/tt4web/
-                    Nazionale/16_9_page-101.png"""
-INDIRIZZO_FEED      = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
+INDIRIZZO_IMMAGINE = """https://www.televideo.rai.it/televideo/pub/tt4web/
+						Nazionale/16_9_page-101.png"""
+INDIRIZZO_FEED = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 
-#Periodi Temporali
-sleep = 20
-finestra = 120
+# Periodi Temporali
+SLEEP = 20
+FINESTRA = 120
+
 
 class RSS:
-    def __init__(self, indirizzo : str) -> None:
-        self.indirizzo = indirizzo
-        self.ora = time.localtime()
-        self.lancio = None
-        self.nuovo = False
+	"""Incapsulatore per il feed RSS da utilizzare."""
+	def __init__(self, indirizzo : str) -> None:
+		self.indirizzo = indirizzo
+		self.ora = time.localtime()
+		self.lancio = None
+		self.nuovo = False
 
-    def aggiorna(self) -> time.struct_time:
-        try:
-            nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
-            #Aggiunge un'ora per il fuso orario
-            ora_lancio = time.localtime(time.mktime(nuovo_lancio.published_parsed) + 3_600)
-            if ora_lancio > self.ora:
-                self.ora = ora_lancio
-                self.lancio = nuovo_lancio
-                self.nuovo = True
-                print("ora rss:     ", ora_lancio)
-        except:
-            print("Errore RSS")
-        return self.ora
+	def aggiorna(self) -> time.struct_time:
+		"""Se l'ora dell'ultima notizia è magiore della precedente, aggiorna
+		 l'oggetto e abilita la flag 'nuovo'in ogni caso restituisce l'ultima
+		 ora ricevuta."""
+		try:
+			nuovo_lancio = feedparser.parse(self.indirizzo).entries[0]
+			#Aggiunge un'ora per il fuso orario
+			ora_lancio = time.localtime(time.mktime(nuovo_lancio.published_parsed) + 3_600)
+			if ora_lancio > self.ora:
+				self.ora = ora_lancio
+				self.lancio = nuovo_lancio
+				self.nuovo = True
+				print("ora rss: ", ora_lancio)
+		except:
+			print("Errore RSS")
+		return self.ora
 
     def filtra_link(self, testo : str) -> str:
         #Rimuove i link dal testo, alle volte presenti nel sommario sotto la forma di <a href="...">...</a> e che di solito non portano da nessuna parte
@@ -146,9 +151,9 @@ rss = RSS(INDIRIZZO_FEED)
 immagine = Immagine(INDIRIZZO_IMMAGINE)
 
 while True:
-    if rss.nuovo and immagine.nuovo and time.mktime(rss.ora) - time.mktime(immagine.ora) < finestra:
+    if rss.nuovo and immagine.nuovo and time.mktime(rss.ora) - time.mktime(immagine.ora) < FINESTRA:
         print("Posto")
         posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
         rss.nuovo = False
         immagine.nuovo = False
-    time.sleep(sleep)
+    time.sleep(SLEEP)
