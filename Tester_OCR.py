@@ -53,10 +53,10 @@ def salva(testo: str) -> None:
 	"""Apre un file per con nome AAAA-MM-GG.out, in base alla data, se non
 	esiste lo crea, e salva la stringa inviata."""
 	orario = time.localtime()
-	nome_file = (str(orario.tm_year) + "-" + str(orario.tm_month) +
+	nome_file = (str(orario.tm_year) + "-" + str(orario.tm_mon) +
 					"-" + str(orario.tm_mday) + ".out")
-	with open(nome_file, a) as file:
-		file.write((testo + "\lf"))
+	with open(nome_file, "a") as file:
+		file.write((testo + "\n"))
 
 
 def main() -> None:
@@ -75,9 +75,9 @@ def main() -> None:
             ora_vera = (str(orario_ricezione.tm_hour) + ':'
                         + str(orario_ricezione.tm_min))
             if nuovo_testo != testo:
-				log = ora_vera + "->" + nuovo_testo
+                log = ora_vera + "->" + nuovo_testo
                 print(log)
-				salva (log)
+                salva (log)
                 testo = nuovo_testo
                 ora_testo = orario(testo)
                 if ora_testo is not None:
@@ -86,11 +86,11 @@ def main() -> None:
 						# ricezione, si salva l'immaigne che potrebbe essere
 						# stata ricostruita male.
                         zona_orario.save((ora_vera + '.png'))
-				else:
+                else:
 					# Se l'orario non è stato riconosciuto dall'immagine,
 					# salvo l'immagine che potrebbe essere stata ricostruita
 					# male.
-					zona_orario.save((ora_vera + '.png'))
+                    zona_orario.save((ora_vera + '.png'))
         time.sleep(60)
 
 
