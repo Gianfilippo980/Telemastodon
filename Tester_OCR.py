@@ -69,7 +69,7 @@ def main() -> None:
         immagine = scarica_immagine(indirizzo_immagine)
         if immagine is not None:
             # Ritaglio
-            zona_orario = immagine.crop((24, 28, 119, 53))
+            zona_orario = immagine.crop((24, 28, 118, 53))
             nuovo_testo = riconosci_testo(zona_orario)
             orario_ricezione = time.localtime()
             ora_vera = (str(orario_ricezione.tm_hour) + ':'
