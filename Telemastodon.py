@@ -200,12 +200,16 @@ rss = RSS(INDIRIZZO_FEED)
 immagine = Immagine(INDIRIZZO_IMMAGINE)
 
 while True:
-    if (rss.nuovo() and immagine.nuovo() and
-            rss.orario() is not None and immagine.orario() is not None):
-        if (time.mktime(rss.orario()) - time.mktime(immagine.orario())
-                < FINESTRA*60):
-            print("Posto")
-            posta_immagine(immagine.immagine, rss.titolo(), rss.descrizione())
-            rss.nuovo(False)
-            immagine.flag_nuovo = False
+    if rss.nuovo() and immagine.nuovo():
+        ora_rss = rss.orario()
+        ora_immaigne = immagine.orario()
+        if ora_rss is not None and ora_immaigne is not None:
+            if (time.mktime(ora_rss) - time.mktime(ora_immaigne)
+                    < FINESTRA*60):
+                print("Posto")
+                posta_immagine(immagine.immagine,
+                               rss.titolo(),
+                               rss.descrizione())
+                rss.nuovo(False)
+                immagine.flag_nuovo = False
     time.sleep(SLEEP)
