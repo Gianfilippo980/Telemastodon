@@ -16,7 +16,7 @@ from mastodon import Mastodon
 
 
 # Costanti
-INDIRIZZO_IMMAGINE = """https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"""
+INDIRIZZO_IMMAGINE = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
 INDIRIZZO_FEED = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 HASHTAG = "#Televideo #Ultimora #Italy"
 SLEEP = 20
@@ -121,14 +121,13 @@ class Immagine:
             risposta = requests.get(self.indirizzo, timeout=60)
             risposta.raise_for_status()
         except requests.exceptions.RequestException as errore:
-            print("Errore connessione", errore)
+            print("Errore connessione!", errore)
             return None
         try:
             nuova_immagine = Image.open(BytesIO(risposta.content))
         except Exception as errore:
             print("Errore immagine!", errore)
             return None
-        self.immagine = nuova_immagine
         return nuova_immagine
 
     def aggiorna(self) -> time.struct_time | None:
@@ -230,6 +229,7 @@ while True:
         titolo_rss = rss.titolo(HASHTAG)
         descrizione_rss = rss.descrizione()
         immagine_disponibile = immagine.foto()
+        print(ora_rss, "<->", ora_immaigne)
         # Verifica correttezza
         if (ora_rss is not None and ora_immaigne is not None
                 and titolo_rss is not None and descrizione_rss is not None
