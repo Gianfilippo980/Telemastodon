@@ -16,8 +16,7 @@ from mastodon import Mastodon
 
 
 # Costanti
-INDIRIZZO_IMMAGINE = """https://www.televideo.rai.it/televideo/pub/tt4web/
-    Nazionale/16_9_page-101.png"""
+INDIRIZZO_IMMAGINE = """https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"""
 INDIRIZZO_FEED = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 HASHTAG = "#Televideo #Ultimora #Italy"
 SLEEP = 20
@@ -168,12 +167,12 @@ class Immagine:
             if testo[0] == ".":
                 # A volte lo 0 iniziale non viene riconosciuto
                 testo = "0" + testo
-            testo = testo.split('.')
-            if len(testo) == 2:
-                if len(testo[1]) > 2:
+            testo_split = testo.split('.')
+            if len(testo_split) == 2:
+                if len(testo_split[1]) > 2:
                     # Ci ouò essere uno 0 finale non voluto nei minuti, se ci
                     # sono 3 cifre tolgo l'ultima.
-                    testo[1] = testo[1][:2]
+                    testo = testo[:-1]
                 try:
                     ora = time.strptime(testo, "%H.%M")
                     return ora
