@@ -243,7 +243,6 @@ while True:
         titolo_rss = rss.titolo(HASHTAG)
         descrizione_rss = rss.descrizione()
         immagine_disponibile = immagine.foto()
-        print(ora_rss, "<->", ora_immaigne)
         # Verifica correttezza
         if (ora_rss is not None and ora_immaigne is not None
                 and titolo_rss is not None and descrizione_rss is not None
