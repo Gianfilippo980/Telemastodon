@@ -4,7 +4,6 @@ Televideo RAI"""
 # confronta con l'ora dell'ultima notizia RSS, se le due ore coincidono entro
 # una finestra, il bot posta l'immagine e il sommario della notizia
 
-import re
 import time
 from io import BytesIO
 
@@ -16,7 +15,8 @@ from mastodon import Mastodon
 
 
 # Costanti
-INDIRIZZO_IMMAGINE = "https://www.televideo.rai.it/televideo/pub/tt4web/Nazionale/16_9_page-101.png"
+INDIRIZZO_IMMAGINE = ("https://www.televideo.rai.it/televideo/pub/tt4web/"
+                      "Nazionale/16_9_page-101.png")
 INDIRIZZO_FEED = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 HASHTAG = "#Televideo #Ultimora #Italy"
 SLEEP = 20
@@ -159,21 +159,34 @@ class Immagine:
             # Converto in grigio
             zona_orario = zona_orario.point(lambda p: 255 if p > 100 else 0)
             # Converto in binario
-            testo = pytesseract.image_to_string(zona_orario,
-                                                lang='ita',
-                                                config='--psm 7')
-            testo = re.sub(r'[^0-9.]', '', testo)
+            testo = pytesseract.image_to_string(
+                zona_orario,
+                lang='ita',
+                config="--psm 7 -c tessedit_char_whitelist=0123456789.")
             if testo[0] == ".":
                 # A volte lo 0 iniziale non viene riconosciuto
                 testo = "0" + testo
-            testo_split = testo.split('.')
-            if len(testo_split) == 2:
-                if len(testo_split[1]) > 2:
-                    # Ci ouò essere uno 0 finale non voluto nei minuti, se ci
-                    # sono 3 cifre tolgo l'ultima.
-                    testo = testo[:-1]
+            testo = testo.split('.')
+            if len(testo) == 2:
+                if len(testo[1]) > 2:
+                    # Ci ouò essere uno 0 o un '\n' finale non voluto nei
+                    # minuti, se ci sono 3 cifre tolgo l'ultima.
+                    testo[1] = testo[1][:-1]
+                ore, minuti = map(int, testo)
+                oggi = time.localtime()
                 try:
-                    ora = time.strptime(testo, "%H.%M")
+                    ora = time.struct_time((
+                        oggi.tm_year,   # Anno
+                        oggi.tm_mon,    # Mese
+                        oggi.tm_mday,   # Giorno
+                        ore,            # Ore
+                        minuti,         # Minuti
+                        0,              # Secondi (impostato a 0)
+                        oggi.tm_wday,   # Giorno della settimana
+                        oggi.tm_yday,   # Giorno dell'anno
+                        oggi.tm_isdst   # Flag ora legale
+                        ))
+                    print(ora)
                     return ora
                 except ValueError:
                     print("Errore formato orario")
@@ -198,6 +211,7 @@ class Immagine:
     def foto(self) -> Image.Image | None:
         """Restituisce l'immagine salvata nell'ogetto, se è presente."""
         return self.immagine
+
 
 
 def posta_immagine(foto: Image.Image,
