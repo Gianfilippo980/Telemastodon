@@ -45,7 +45,9 @@ class RSS:
             # La libreria sta cambiando nome alle sue eccezioni.
             print("Errore RSS!", errore)
             return None
-        if ('published_parsed', 'title', 'summary') in nuovo_lancio:
+        if (hasattr(nuovo_lancio, 'title')
+                and hasattr(nuovo_lancio, 'summary')
+                and hasattr(nuovo_lancio, 'published_parsed')):
             # I lanci che non contengono questi elementi sono inutili.
             ora_lancio = time.localtime(
                 time.mktime(nuovo_lancio.published_parsed) + 3_600)
