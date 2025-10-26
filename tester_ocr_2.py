@@ -46,11 +46,11 @@ class Immagine:
         nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
             nuova_ora = self.riconosci_orario(nuova_immagine)
+            print("ora immagine:", nuova_ora)
             if nuova_ora is not None and nuova_ora > self.ora:
                 self.immagine = nuova_immagine
                 self.ora = nuova_ora
                 self.flag_nuovo = True
-                print("ora immagine:", nuova_ora)
                 return nuova_ora
         return None
 
@@ -94,7 +94,6 @@ class Immagine:
                         oggi.tm_yday,   # Giorno dell'anno
                         oggi.tm_isdst   # Flag ora legale
                         ))
-                    print(ora)
                     return ora
                 except ValueError:
                     print("Errore formato orario")
@@ -124,5 +123,5 @@ class Immagine:
 immagine = Immagine(INDIRIZZO_IMMAGINE)
 
 while True:
-    print(immagine.aggiorna())
+    print(immagine.aggiorna(), "\n")
     time.sleep(SLEEP)

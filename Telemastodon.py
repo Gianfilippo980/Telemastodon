@@ -138,11 +138,11 @@ class Immagine:
         nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
             nuova_ora = self.riconosci_orario(nuova_immagine)
+            print("ora immagine:", nuova_ora)
             if nuova_ora is not None and nuova_ora > self.ora:
                 self.immagine = nuova_immagine
                 self.ora = nuova_ora
                 self.flag_nuovo = True
-                print("ora immagine:", nuova_ora)
                 return nuova_ora
         return None
 
@@ -169,7 +169,7 @@ class Immagine:
             testo = testo.split('.')
             if len(testo) == 2:
                 if len(testo[1]) > 2:
-                    # Ci ouò essere uno 0 o un '\n' finale non voluto nei
+                    # Ci ouò essere uno 0 o un '\n' finale non voluto nei 
                     # minuti, se ci sono 3 cifre tolgo l'ultima.
                     testo[1] = testo[1][:-1]
                 ore, minuti = map(int, testo)
@@ -186,7 +186,6 @@ class Immagine:
                         oggi.tm_yday,   # Giorno dell'anno
                         oggi.tm_isdst   # Flag ora legale
                         ))
-                    print(ora)
                     return ora
                 except ValueError:
                     print("Errore formato orario")
@@ -211,7 +210,6 @@ class Immagine:
     def foto(self) -> Image.Image | None:
         """Restituisce l'immagine salvata nell'ogetto, se è presente."""
         return self.immagine
-
 
 
 def posta_immagine(foto: Image.Image,
