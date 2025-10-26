@@ -138,11 +138,11 @@ class Immagine:
         nuova_immagine = self.scarica_immagine()
         if nuova_immagine is not None:
             nuova_ora = self.riconosci_orario(nuova_immagine)
-            print("ora immagine:", nuova_ora)
             if nuova_ora is not None and nuova_ora > self.ora:
                 self.immagine = nuova_immagine
                 self.ora = nuova_ora
                 self.flag_nuovo = True
+                print("ora immagine:", nuova_ora)
                 return nuova_ora
         return None
 
@@ -249,7 +249,7 @@ while True:
             # Verifica Compatibilità
             if (time.mktime(ora_rss) - time.mktime(ora_immaigne)
                     < FINESTRA*60):
-                print("Posto")
+                print("Posto\n")
                 posta_immagine(immagine_disponibile,
                                titolo_rss,
                                descrizione_rss)
