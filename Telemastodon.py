@@ -160,7 +160,7 @@ class Immagine:
             # Ritaglio l'angolo in alto a sinistra.
             zona_orario = zona_orario.convert("L")
             # Converto in grigio
-            zona_orario = zona_orario.point(lambda p: 255 if p > 100 else 0)
+            zona_orario = zona_orario.point(lambda p: 255 if p > 127 else 0)
             # Converto in binario
             testo = pytesseract.image_to_string(
                 zona_orario,
