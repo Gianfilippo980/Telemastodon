@@ -114,6 +114,7 @@ class Immagine:
         self.ora = time.localtime()
         self.immagine: Image.Image | None = None
         self.flag_nuovo = False
+        self.testo_ocr = ""
 
     def scarica_immagine(self) -> Image.Image | None:
         """Scarica l'immagine, la salva nell'oggetto e la restituisce,
@@ -165,13 +166,17 @@ class Immagine:
                 zona_orario,
                 lang='ita',
                 config="--psm 7 -c tessedit_char_whitelist=0123456789.")
+            # Per debug:
+            if testo != self.testo_ocr:
+                print("Testo OCR: ", testo)
+                self.testo_ocr = testo
             if testo[0] == ".":
                 # A volte lo 0 iniziale non viene riconosciuto
                 testo = "0" + testo
             testo = testo.split('.')
             if len(testo) == 2:
                 if len(testo[1]) > 2:
-                    # Ci ouò essere uno 0 o un '\n' finale non voluto nei 
+                    # Ci ouò essere uno 0 o un '\n' finale non voluto nei
                     # minuti, se ci sono 3 cifre tolgo l'ultima.
                     testo[1] = testo[1][:-1]
                 ore, minuti = map(int, testo)
@@ -248,7 +253,7 @@ while True:
                 and titolo_rss is not None and descrizione_rss is not None
                 and immagine_disponibile is not None):
             # Verifica Compatibilità
-            if (time.mktime(ora_rss) - time.mktime(ora_immaigne)
+            if (abs(time.mktime(ora_rss) - time.mktime(ora_immaigne))
                     < FINESTRA*60):
                 print("Posto\n")
                 posta_immagine(immagine_disponibile,
