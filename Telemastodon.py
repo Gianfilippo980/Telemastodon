@@ -156,16 +156,17 @@ class Immagine:
         formato time.struct_time, altrimenti restituisce None
         """
         if nuova_immagine is not None:
+            # Ritaglio l'angolo in alto a sinistra e la binarizzo
             zona_orario = nuova_immagine.crop((24, 28, 116, 53))
-            # Ritaglio l'angolo in alto a sinistra.
             zona_orario = zona_orario.convert("L")
-            # Converto in grigio
             zona_orario = zona_orario.point(lambda p: 255 if p > 127 else 0)
-            # Converto in binario
+            # OCR
             testo = pytesseract.image_to_string(
                 zona_orario,
                 lang='ita',
                 config="--psm 7 -c tessedit_char_whitelist=0123456789.")
+            # Tolgo il "\n" finale
+            testo = testo[:-1]
             # Per debug:
             if testo != self.testo_ocr:
                 print("Testo OCR: ", testo)
@@ -176,7 +177,7 @@ class Immagine:
             testo = testo.split('.')
             if len(testo) == 2:
                 if len(testo[1]) > 2:
-                    # Ci ouò essere uno 0 o un '\n' finale non voluto nei
+                    # Ci ouò essere uno 0 finale non voluto nei
                     # minuti, se ci sono 3 cifre tolgo l'ultima.
                     testo[1] = testo[1][:-1]
                 ore, minuti = map(int, testo)
