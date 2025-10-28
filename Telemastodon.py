@@ -182,21 +182,28 @@ class Immagine:
                     testo[1] = testo[1][:-1]
                 ore, minuti = map(int, testo)
                 oggi = time.localtime()
-                try:
-                    ora = time.struct_time((
-                        oggi.tm_year,   # Anno
-                        oggi.tm_mon,    # Mese
-                        oggi.tm_mday,   # Giorno
-                        ore,            # Ore
-                        minuti,         # Minuti
-                        0,              # Secondi (impostato a 0)
-                        oggi.tm_wday,   # Giorno della settimana
-                        oggi.tm_yday,   # Giorno dell'anno
-                        oggi.tm_isdst   # Flag ora legale
-                        ))
-                    return ora
-                except ValueError:
-                    print("Errore formato orario")
+                if ore == oggi.tm_hour:
+                    # Questo serve non solo ad escludere lo scenario in cui
+                    # alla mezzanotte venga ricostruito un orario usando la
+                    # nuova data e l'ultima ora ricevuta (tipicamente 23), ma
+                    # anche ad impedire che un errore del OCR o del serviizo
+                    # possa tenere il bot bloccato per un numero imprecisato
+                    # di ore.
+                    try:
+                        ora = time.struct_time((
+                            oggi.tm_year,   # Anno
+                            oggi.tm_mon,    # Mese
+                            oggi.tm_mday,   # Giorno
+                            ore,            # Ore
+                            minuti,         # Minuti
+                            0,              # Secondi (impostato a 0)
+                            oggi.tm_wday,   # Giorno della settimana
+                            oggi.tm_yday,   # Giorno dell'anno
+                            oggi.tm_isdst   # Flag ora legale
+                            ))
+                        return ora
+                    except ValueError:
+                        print("Errore formato orario")
         return None
 
     def nuovo(self, imposta: bool | None = None) -> bool:
