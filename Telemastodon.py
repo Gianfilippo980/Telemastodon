@@ -161,41 +161,42 @@ class Immagine:
                 zona_orario,
                 lang='ita',
                 config="--psm 7 -c tessedit_char_whitelist=0123456789.")
-            # Tolgo il "\n" finale
-            testo = testo[:-1]
-            # Per debug:
-            if testo != self.testo_ocr:
-                print("Testo OCR: ", testo)
-                self.testo_ocr = testo
-            if testo[0] == ".":
-                # A volte lo 0 iniziale non viene riconosciuto
-                testo = "0" + testo
-            testo = testo.split('.')
-            if len(testo) == 2:
-                if len(testo[1]) > 2:
-                    # Ci ouò essere uno 0 finale non voluto nei
-                    # minuti, se ci sono 3 cifre tolgo l'ultima.
-                    testo[1] = testo[1][:-1]
-                ore, minuti = map(int, testo)
-                oggi = time.localtime()
-                if ore == oggi.tm_hour or ore == oggi.tm_hour-1:
-                    # Escludo il caso delle 23:59 ricostruite con la data del
-                    # giorno dopo, in gererale accetto l'ora precedente.
-                    try:
-                        ora = time.struct_time((
-                            oggi.tm_year,   # Anno
-                            oggi.tm_mon,    # Mese
-                            oggi.tm_mday,   # Giorno
-                            ore,            # Ore
-                            minuti,         # Minuti
-                            0,              # Secondi (impostato a 0)
-                            oggi.tm_wday,   # Giorno della settimana
-                            oggi.tm_yday,   # Giorno dell'anno
-                            oggi.tm_isdst   # Flag ora legale
-                            ))
-                        return ora
-                    except ValueError:
-                        print("Errore formato orario")
+            if len(testo )> 3:
+                # Tolgo il "\n" finale
+                testo = testo[:-1]
+                # Per debug:
+                if testo != self.testo_ocr:
+                    print("Testo OCR: ", testo)
+                    self.testo_ocr = testo
+                if testo[0] == ".":
+                    # A volte lo 0 iniziale non viene riconosciuto
+                    testo = "0" + testo
+                testo = testo.split('.')
+                if len(testo) == 2:
+                    if len(testo[1]) > 2:
+                        # Ci ouò essere uno 0 finale non voluto nei
+                        # minuti, se ci sono 3 cifre tolgo l'ultima.
+                        testo[1] = testo[1][:-1]
+                    ore, minuti = map(int, testo)
+                    oggi = time.localtime()
+                    if ore == oggi.tm_hour or ore == oggi.tm_hour-1:
+                        # Escludo il caso delle 23:59 ricostruite con la data del
+                        # giorno dopo, in gererale accetto l'ora precedente.
+                        try:
+                            ora = time.struct_time((
+                                oggi.tm_year,   # Anno
+                                oggi.tm_mon,    # Mese
+                                oggi.tm_mday,   # Giorno
+                                ore,            # Ore
+                                minuti,         # Minuti
+                                0,              # Secondi (impostato a 0)
+                                oggi.tm_wday,   # Giorno della settimana
+                                oggi.tm_yday,   # Giorno dell'anno
+                                oggi.tm_isdst   # Flag ora legale
+                                ))
+                            return ora
+                        except ValueError:
+                            print("Errore formato orario")
         return None
 
     def nuovo(self, imposta: bool | None = None) -> bool:
