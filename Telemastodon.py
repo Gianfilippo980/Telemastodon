@@ -11,7 +11,7 @@ import requests
 import feedparser
 from PIL import Image
 import pytesseract
-from mastodon import Mastodon
+import mastodon
 
 
 # Costanti
@@ -235,14 +235,19 @@ def posta_immagine(foto: Image.Image,
     """
     buffer = BytesIO()
     foto.save(buffer, format='PNG')
-    media = mastodon.media_post(buffer.getvalue(),
-                                mime_type='image/png',
-                                description=descrizione)
-    mastodon.status_post(testo_post, media_ids=media, language='IT')
+    try:
+        media = profilo_mastodon.media_post(buffer.getvalue(),
+                                            mime_type='image/png',
+                                            description=descrizione)
+        profilo_mastodon.status_post(testo_post, media_ids=media,
+                                     language='IT')
+    except (mastodon.MastodonNetworkError, mastodon.MastodonServerError,
+            mastodon.MastodonAPIError) as errore:
+        print("Errore Mastodon!", errore)
 
 
 # Istanzio gli oggetti
-mastodon = Mastodon(access_token='mstdn_access.secret')
+profilo_mastodon = mastodon.Mastodon(access_token='mstdn_access.secret')
 rss = RSS(INDIRIZZO_FEED)
 immagine = Immagine(INDIRIZZO_IMMAGINE)
 
