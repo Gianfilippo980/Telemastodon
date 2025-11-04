@@ -14,18 +14,14 @@ import pytesseract
 import mastodon
 
 
-# Costanti
 INDIRIZZO_IMMAGINE = ("https://www.televideo.rai.it/televideo/pub/tt4web/"
                       "Nazionale/16_9_page-101.png")
 INDIRIZZO_FEED = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
 HASHTAG = "#Televideo #Ultimora #Italy"
-SLEEP = 20
-FINESTRA = 10
-# Finestra è il numero di minuti di differenza fra gli orarî dell'immagine e
-# del feed entro cui sono ritenuti contemporanei.
+SLEEP = 20      # Secondi fra i cicli
+FINESTRA = 10   # Minuti max fra immagine e RSS
 
 
-# Definisco le classi
 class RSS:
     """Gestione feed RSS, ogni istanza corrisponde ad un solo URL."""
     def __init__(self, indirizzo: str) -> None:
@@ -124,12 +120,12 @@ class Immagine:
             risposta = requests.get(self.indirizzo, timeout=60)
             risposta.raise_for_status()
         except requests.exceptions.RequestException as errore:
-            print("Errore connessione!", errore)
+            print("Errore connessione immsgine!", errore)
             return None
         try:
             nuova_immagine = Image.open(BytesIO(risposta.content))
         except Exception as errore:
-            print("Errore immagine!", errore)
+            print("Errore formato immagine!", errore)
             return None
         return nuova_immagine
 
@@ -182,13 +178,9 @@ class Immagine:
                     testo[1] = testo[1][:-1]
                 ore, minuti = map(int, testo)
                 oggi = time.localtime()
-                if ore == oggi.tm_hour:
-                    # Questo serve non solo ad escludere lo scenario in cui
-                    # alla mezzanotte venga ricostruito un orario usando la
-                    # nuova data e l'ultima ora ricevuta (tipicamente 23), ma
-                    # anche ad impedire che un errore del OCR o del serviizo
-                    # possa tenere il bot bloccato per un numero imprecisato
-                    # di ore.
+                if ore == oggi.tm_hour or ore == oggi.tm_hour-1:
+                    # Escludo il caso delle 23:59 ricostruite con la data del
+                    # giorno dopo, in gererale accetto l'ora precedente.
                     try:
                         ora = time.struct_time((
                             oggi.tm_year,   # Anno
@@ -246,32 +238,32 @@ def posta_immagine(foto: Image.Image,
         print("Errore Mastodon!", errore)
 
 
-# Istanzio gli oggetti
-profilo_mastodon = mastodon.Mastodon(access_token='mstdn_access.secret')
-rss = RSS(INDIRIZZO_FEED)
-immagine = Immagine(INDIRIZZO_IMMAGINE)
+if __name__ == "__main__":
+    profilo_mastodon = mastodon.Mastodon(access_token='mstdn_access.secret')
+    rss = RSS(INDIRIZZO_FEED)
+    immagine = Immagine(INDIRIZZO_IMMAGINE)
 
-while True:
-    rss.aggiorna()
-    immagine.aggiorna()
-    # Verifica novità
-    if rss.nuovo() and immagine.nuovo():
-        ora_rss = rss.orario()
-        ora_immaigne = immagine.orario()
-        titolo_rss = rss.titolo(HASHTAG)
-        descrizione_rss = rss.descrizione()
-        immagine_disponibile = immagine.foto()
-        # Verifica correttezza
-        if (ora_rss is not None and ora_immaigne is not None
-                and titolo_rss is not None and descrizione_rss is not None
-                and immagine_disponibile is not None):
-            # Verifica Compatibilità
-            if (abs(time.mktime(ora_rss) - time.mktime(ora_immaigne))
-                    < FINESTRA*60):
-                print("Posto\n")
-                posta_immagine(immagine_disponibile,
-                               titolo_rss,
-                               descrizione_rss)
-                rss.nuovo(False)
-                immagine.nuovo(False)
-    time.sleep(SLEEP)
+    while True:
+        rss.aggiorna()
+        immagine.aggiorna()
+        # Verifica novità
+        if rss.nuovo() and immagine.nuovo():
+            ora_rss = rss.orario()
+            ora_immaigne = immagine.orario()
+            titolo_rss = rss.titolo(HASHTAG)
+            descrizione_rss = rss.descrizione()
+            immagine_disponibile = immagine.foto()
+            # Verifica correttezza
+            if (ora_rss is not None and ora_immaigne is not None
+                    and titolo_rss is not None and descrizione_rss is not None
+                    and immagine_disponibile is not None):
+                # Verifica Compatibilità
+                if (abs(time.mktime(ora_rss) - time.mktime(ora_immaigne))
+                        < FINESTRA*60):
+                    print("Posto\n")
+                    posta_immagine(immagine_disponibile,
+                                   titolo_rss,
+                                   descrizione_rss)
+                    rss.nuovo(False)
+                    immagine.nuovo(False)
+        time.sleep(SLEEP)
