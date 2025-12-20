@@ -220,7 +220,8 @@ class Immagine:
         return self.immagine
 
 
-def posta_immagine(foto: Image.Image,
+def posta_immagine(profilo_mastodon: mastodon.Mastodon,
+                   foto: Image.Image,
                    testo_post: str,
                    descrizione: str) -> None:
     """Pubblica un toot su Mastodon con il titolo, la foto
@@ -240,7 +241,7 @@ def posta_immagine(foto: Image.Image,
 
 
 if __name__ == "__main__":
-    profilo_mastodon = mastodon.Mastodon(access_token='mstdn_access.secret')
+    oggetto_mastodon = mastodon.Mastodon(access_token='mstdn_access.secret')
     rss = RSS(INDIRIZZO_FEED)
     immagine = Immagine(INDIRIZZO_IMMAGINE)
 
@@ -262,7 +263,8 @@ if __name__ == "__main__":
                 if (abs(time.mktime(ora_rss) - time.mktime(ora_immaigne))
                         < FINESTRA*60):
                     print("Posto\n")
-                    posta_immagine(immagine_disponibile,
+                    posta_immagine(oggetto_mastodon,
+                                   immagine_disponibile,
                                    titolo_rss,
                                    descrizione_rss)
                     rss.nuovo(False)
