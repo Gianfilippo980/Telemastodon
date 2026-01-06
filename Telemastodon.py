@@ -161,7 +161,7 @@ class Immagine:
                 zona_orario,
                 lang='ita',
                 config="--psm 7 -c tessedit_char_whitelist=0123456789.")
-            if len(testo)> 3:
+            if len(testo) > 3:
                 # Tolgo il "\n" finale
                 testo = testo[:-1]
                 # Per debug:
@@ -180,8 +180,9 @@ class Immagine:
                     ore, minuti = map(int, testo)
                     oggi = time.localtime()
                     if ore == oggi.tm_hour or ore == oggi.tm_hour-1:
-                        # Escludo il caso delle 23:59 ricostruite con la data del
-                        # giorno dopo, in gererale accetto l'ora precedente.
+                        # Validazione ora prima di completarla con la data, si
+                        # le 23 non possono essere completate con la data del
+                        # giorno successivo
                         try:
                             ora = time.struct_time((
                                 oggi.tm_year,   # Anno
