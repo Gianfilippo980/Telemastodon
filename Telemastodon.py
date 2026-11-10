@@ -14,10 +14,10 @@ import pytesseract
 import mastodon
 
 
-INDIRIZZO_IMMAGINE = ("https://www.televideo.rai.it/televideo/pub/tt4web/"
-                      "Nazionale/16_9_page-101.png")
-INDIRIZZO_FEED = 'https://www.televideo.rai.it/televideo/pub/rss101.xml'
-HASHTAG = "#Televideo #Ultimora #Italy"
+INDIRIZZO_IMMAGINE = ("https://www.rainews.it/tlvd/images/nazionale/"
+                      "16_9_page-101.png")
+INDIRIZZO_FEED = "https://www.rainews.it/rss/ultimora"
+HASHTAG = "#Televideo #Ultimora #Italy #Teletext"
 SLEEP = 20      # Secondi fra i cicli
 FINESTRA = 10   # Minuti max fra immagine e RSS
 
